@@ -99,7 +99,7 @@ for i in range(len(compresm)):
 # MyMIDI.addNote(track, channel, pitch+2, time+2, duration, volume)
 MyMIDI.addProgramChange(trackc, channel, time, Instrument.AcousticGuitar_nylon)
 MyMIDI.addProgramChange(trackb, channel, time, Instrument.ElectricBass_finger)
-MyMIDI.addProgramChange(trackm, channel, time, Instrument.Flute)
+MyMIDI.addProgramChange(trackm, channel, time, Instrument.BrightAcousticPiano)
 
 # And write it to disk.
 binfile = open("output.mid", 'wb')

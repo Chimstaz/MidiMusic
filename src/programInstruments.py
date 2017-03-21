@@ -1,11 +1,11 @@
 """Enumerator with all typical instruments."""
 from enum import IntEnum
+from itertools import chain
 
 
-class Instrument(IntEnum):
-    """Enum with all typical instruments in midi."""
+class Piano(IntEnum):
+    """Only pianos."""
 
-    # Piano
     AcousticGrandPiano = 0
     BrightAcousticPiano = 1
     ElectricGrandPiano = 2
@@ -14,7 +14,11 @@ class Instrument(IntEnum):
     ElectricPiano2 = 5
     Harpsichord = 6
     Clavinet_stylizedasClavi = 7
-    # Chromatic Percussion
+
+
+class ChromaticPercussion(IntEnum):
+    """Chromatic Percussions, whatever this instrument is."""
+
     Celesta = 8
     Glockenspiel = 9
     MusicBox = 10
@@ -23,7 +27,11 @@ class Instrument(IntEnum):
     Xylophone = 13
     TubularBells = 14
     Dulcimer = 15
-    # Organ
+
+
+class Organ(IntEnum):
+    """Organs."""
+
     DrawbarOrgan = 16
     PercussiveOrgan = 17
     RockOrgan = 18
@@ -32,7 +40,11 @@ class Instrument(IntEnum):
     Accordion = 21
     Harmonica = 22
     TangoAccordion = 23
-    # Guitar
+
+
+class Guitar(IntEnum):
+    """Guitars."""
+
     AcousticGuitar_nylon = 24
     AcousticGuitar_steel = 25
     ElectricGuitar_jazz = 26
@@ -41,7 +53,11 @@ class Instrument(IntEnum):
     OverdrivenGuitar = 29
     DistortionGuitar = 30
     GuitarHarmonics = 31
-    # Bass
+
+
+class Bass(IntEnum):
+    """Basses."""
+
     AcousticBass = 32
     ElectricBass_finger = 33
     ElectricBass_pick = 34
@@ -50,7 +66,11 @@ class Instrument(IntEnum):
     SlapBass2 = 37
     SynthBass1 = 38
     SynthBass2 = 39
-    # Strings
+
+
+class Strings(IntEnum):
+    """Strings."""
+
     Violin = 40
     Viola = 41
     Cello = 42
@@ -59,7 +79,11 @@ class Instrument(IntEnum):
     PizzicatoStrings = 45
     OrchestralHarp = 46
     Timpani = 47
-    # Ensemble
+
+
+class Ensemble(IntEnum):
+    """Ensembles."""
+
     StringEnsemble1 = 48
     StringEnsemble2 = 49
     SynthStrings1 = 50
@@ -68,7 +92,11 @@ class Instrument(IntEnum):
     VoiceOohs = 53
     SynthChoir = 54
     OrchestraHit = 55
-    # Brass
+
+
+class Brass(IntEnum):
+    """Brasses."""
+
     Trumpet = 56
     Trombone = 57
     Tuba = 58
@@ -77,7 +105,11 @@ class Instrument(IntEnum):
     BrassSection = 61
     SynthBrass1 = 62
     SynthBrass2 = 63
-    # Reed
+
+
+class Reed(IntEnum):
+    """Reed."""
+
     SopranoSax = 64
     AltoSax = 65
     TenorSax = 66
@@ -86,7 +118,11 @@ class Instrument(IntEnum):
     EnglishHorn = 69
     Bassoon = 70
     Clarinet = 71
-    # Pipe
+
+
+class Pipe(IntEnum):
+    """Pipes."""
+
     Piccolo = 72
     Flute = 73
     Recorder = 74
@@ -95,7 +131,11 @@ class Instrument(IntEnum):
     Shakuhachi = 77
     Whistle = 78
     Ocarina = 79
-    # Synth Lead
+
+
+class SynthLead(IntEnum):
+    """Synth Lead."""
+
     Lead1_square = 80
     Lead2_sawtooth = 81
     Lead3_calliope = 82
@@ -104,7 +144,11 @@ class Instrument(IntEnum):
     Lead6_voice = 85
     Lead7_fifths = 86
     Lead8_bass_lead = 87
-    # Synth Pad
+
+
+class SynthPad(IntEnum):
+    """Synth Pad."""
+
     Pad1_NewAgeAlsoknownasFantasia = 88
     Pad2_warm = 89
     Pad3_polysynth = 90
@@ -113,7 +157,11 @@ class Instrument(IntEnum):
     Pad6_metallic = 93
     Pad7_halo = 94
     Pad8_sweep = 95
-    # Synth Effects
+
+
+class SynthEffects(IntEnum):
+    """Synth Effects."""
+
     FX1_rain = 96
     FX2_soundtrack = 97
     FX3_crystal = 98
@@ -122,7 +170,11 @@ class Instrument(IntEnum):
     FX6_goblins = 101
     FX7_echoes = 102
     FX8_sci_fi = 103
-    # Ethnic
+
+
+class Ethnic(IntEnum):
+    """Ethnic."""
+
     Sitar = 104
     Banjo = 105
     Shamisen = 106
@@ -131,7 +183,11 @@ class Instrument(IntEnum):
     Bagpipe = 109
     Fiddle = 110
     Shanai = 111
-    # Percussive
+
+
+class Percussive(IntEnum):
+    """Percussive."""
+
     TinkleBell = 112
     Agogo = 113
     SteelDrums = 114
@@ -140,7 +196,11 @@ class Instrument(IntEnum):
     MelodicTom = 117
     SynthDrum = 118
     ReverseCymbal = 119
-    # Sound effects
+
+
+class SoundEffects(IntEnum):
+    """Sound Effects."""
+
     GuitarFretNoise = 120
     BreathNoise = 121
     Seashore = 122
@@ -149,3 +209,10 @@ class Instrument(IntEnum):
     Helicopter = 125
     Applause = 126
     Gunshot = 127
+
+
+Instrument = IntEnum('Instrument', [(i.name, i.value) for i in chain(
+                Piano, ChromaticPercussion, Organ, Guitar,
+                Bass, Strings, Ensemble, Brass, Reed, Pipe,
+                SynthLead, SynthPad, SynthEffects, Ethnic,
+                Percussive, SoundEffects)])
