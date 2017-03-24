@@ -2,6 +2,44 @@
 from basicNotesDefinitions import OCTAVE
 import random
 from collections import deque
+from MyUtils import coalesce
+
+
+class BassSpecification:
+    """Container for bass options."""
+
+    def __init__(self, notesPerBar=None, hoppPossibility=None, walkPossibility=None, repeatnotePossibility=None):
+        """."""
+        self.notesPerBar = notesPerBar
+        self.hoppPossibility = hoppPossibility
+        self.walkPossibility = walkPossibility
+        self.repeatnotePossibility = repeatnotePossibility
+
+    def Generate(self, chordLine, notesPerBar=4, hoppPossibility=0.5, walkPossibility=0.5, repeatnotePossibility=0.5):
+        """Run GenerateBass using internal state.
+
+        Parameters are only considered if internal value is null.
+        """
+        return GenerateBass(
+            chordLine,
+            coalesce(self.notesPerBar, notesPerBar),
+            coalesce(self.hoppPossibility, hoppPossibility),
+            coalesce(self.walkPossibility, walkPossibility),
+            coalesce(self.repeatnotePossibility, repeatnotePossibility))
+
+
+class BassLineOptions:
+    """Class containg bass option and line option."""
+
+    def __init__(self, bassOptions=None, lenghtInBars=None, instrument=None):
+        """."""
+        self.bassOptions = bassOptions
+        self.lenghtInBars = lenghtInBars
+        self.instrument = instrument
+
+    def Generate(self, chordLine):
+        """Run Generate on bassOptions."""
+        self.bassOptions.Generate(chordLine[0:self.lenghtInBars])
 
 
 def GenerateBass(chordLine, density, hoppPossibility=0.5, walkPossibility=0.5, repeatnotePossibility=0.5):

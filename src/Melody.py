@@ -3,6 +3,20 @@ import random
 from basicNotesDefinitions import OCTAVE, MajorKeyNotes
 
 
+class MelodySpecification:
+    """Container for melody options."""
+
+    def __init__(self, notesPerBar=4, key=MajorKeyNotes, jumpPossibility=0.3):
+        """."""
+        self.notesPerBar = notesPerBar
+        self.key = key
+        self.jumpPossibility = jumpPossibility
+
+    def Generate(self, chordLine):
+        """Run GenerateMelody using internal state."""
+        return GenerateMelody(chordLine, self.notesPerBar, self.key, self.jumpPossibility)
+
+
 def GenerateMelody(chordLine, density, key=MajorKeyNotes, jumpPossibility=0.3):
     """Generate melody for given chords line.
 
