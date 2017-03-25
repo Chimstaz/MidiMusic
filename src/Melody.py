@@ -1,20 +1,44 @@
 """Melody line related stuff."""
 import random
-from basicNotesDefinitions import OCTAVE, MajorKeyNotes
+from basicNotesDefinitions import OCTAVE, MajorKeyNotes, MinorKeyNotes
+from Line import Line
+from MyUtils import coalesce
+import programInstruments as pI
+from itertools import chain
 
 
-class MelodySpecification:
-    """Container for melody options."""
+class MelodyGenerator:
+    """Collect parameters and generate bass line using random values if necesery."""
 
-    def __init__(self, notesPerBar=4, key=MajorKeyNotes, jumpPossibility=0.3):
+    def __init__(
+                self, notesPerBar=None, jumpPossibility=None,
+                lengthInBars=None, instrument=None,
+                concatenatePossibility=None, key=None, pitch=None):
         """."""
         self.notesPerBar = notesPerBar
-        self.key = key
         self.jumpPossibility = jumpPossibility
+        self.lengthInBars = lengthInBars
+        self.instrument = instrument
+        self.concatenatePossibility = concatenatePossibility
+        self.key = key
+        self.pitch = pitch
 
-    def Generate(self, chordLine):
-        """Run GenerateMelody using internal state."""
-        return GenerateMelody(chordLine, self.notesPerBar, self.key, self.jumpPossibility)
+    def Generate(self, chordLine, motiveLength=1, maxNotesPerBar=1, basePitch=60):
+        """Set state of the object ."""
+        glengthInBars = coalesce(self.lengthInBars, motiveLength*random.randint(1, len(chordLine)/motiveLength))
+        gnotesPerBar = coalesce(self.notesPerBar, random.randint(1, maxNotesPerBar))
+        gjumpPossibility = coalesce(self.jumpPossibility, random.random())
+        ginstrument = coalesce(self.instrument, random.choice(list(chain(pI.Ethnic, pI.Guitar, pI.Organ, pI.Pipe, pI.Piano, pI.Strings, pI.Reed))))
+        gconcatenatePossibility = coalesce(self.concatenatePossibility, random.random())
+        gkey = coalesce(self.key, random.choice([MajorKeyNotes, MinorKeyNotes]))
+        gpitch = coalesce(self.pitch, OCTAVE*random.randint(-1, 1) + basePitch)
+        gline = GenerateMelody(
+            chordLine=chordLine[0:glengthInBars],
+            density=gnotesPerBar,
+            key=gkey,
+            jumpPossibility=gjumpPossibility,
+            )
+        return Line(glengthInBars, gnotesPerBar, ginstrument, gline, gconcatenatePossibility, gpitch)
 
 
 def GenerateMelody(chordLine, density, key=MajorKeyNotes, jumpPossibility=0.3):

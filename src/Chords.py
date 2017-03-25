@@ -3,14 +3,6 @@ from basicNotesDefinitions import ChordType, Notes
 import random
 
 
-class Chord:
-    """Chord."""
-
-    def __init__(self, key, notes):
-        """Generate chord from list of notes in given key."""
-        self.notes = [x+key for x in notes]
-
-
 ChordGroups = [
             [[x+Notes.C for x in ChordType.Major], [x+Notes.C for x in ChordType.Major7], [x+Notes.C for x in ChordType.Major6]],
             [[x+Notes.D for x in ChordType.Minor], [x+Notes.D for x in ChordType.Minor7], [x+Notes.F for x in ChordType.Major6]],

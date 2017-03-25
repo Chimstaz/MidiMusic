@@ -1,45 +1,49 @@
 """Bass line related stuff."""
 from basicNotesDefinitions import OCTAVE
+from Line import Line
 import random
 from collections import deque
 from MyUtils import coalesce
+import programInstruments as pI
+from itertools import chain
 
 
-class BassSpecification:
-    """Container for bass options."""
+class BassGenerator:
+    """Collect parameters and generate bass line using random values if necesery."""
 
-    def __init__(self, notesPerBar=None, hoppPossibility=None, walkPossibility=None, repeatnotePossibility=None):
+    def __init__(
+                self, notesPerBar=None, hoppPossibility=None,
+                walkPossibility=None, repeatnotePossibility=None,
+                lengthInBars=None, instrument=None,
+                concatenatePossibility=None, pitch=None):
         """."""
         self.notesPerBar = notesPerBar
         self.hoppPossibility = hoppPossibility
         self.walkPossibility = walkPossibility
         self.repeatnotePossibility = repeatnotePossibility
-
-    def Generate(self, chordLine, notesPerBar=4, hoppPossibility=0.5, walkPossibility=0.5, repeatnotePossibility=0.5):
-        """Run GenerateBass using internal state.
-
-        Parameters are only considered if internal value is null.
-        """
-        return GenerateBass(
-            chordLine,
-            coalesce(self.notesPerBar, notesPerBar),
-            coalesce(self.hoppPossibility, hoppPossibility),
-            coalesce(self.walkPossibility, walkPossibility),
-            coalesce(self.repeatnotePossibility, repeatnotePossibility))
-
-
-class BassLineOptions:
-    """Class containg bass option and line option."""
-
-    def __init__(self, bassOptions=None, lenghtInBars=None, instrument=None):
-        """."""
-        self.bassOptions = bassOptions
-        self.lenghtInBars = lenghtInBars
+        self.lengthInBars = lengthInBars
         self.instrument = instrument
+        self.concatenatePossibility = concatenatePossibility
+        self.pitch = pitch
 
-    def Generate(self, chordLine):
-        """Run Generate on bassOptions."""
-        self.bassOptions.Generate(chordLine[0:self.lenghtInBars])
+    def Generate(self, chordLine, motiveLength=1, maxNotesPerBar=1, basePitch=60):
+        """Set state of the object ."""
+        glengthInBars = coalesce(self.lengthInBars, motiveLength*random.randint(1, len(chordLine)/motiveLength))
+        gnotesPerBar = coalesce(self.notesPerBar, random.randint(1, maxNotesPerBar))
+        ghoppPossibility = coalesce(self.hoppPossibility, random.random())
+        gwalkPossibility = coalesce(self.walkPossibility, random.random())
+        grepeatnotePossibility = coalesce(self.repeatnotePossibility, random.random())
+        ginstrument = coalesce(self.instrument, random.choice(list(chain(pI.Bass, pI.Brass, pI.Percussive, pI.ChromaticPercussion))))
+        gconcatenatePossibility = coalesce(self.concatenatePossibility, 0)
+        gpitch = coalesce(self.pitch, OCTAVE*random.randint(-2, 0) + basePitch)
+        gline = GenerateBass(
+            chordLine=chordLine[0:glengthInBars],
+            density=gnotesPerBar,
+            hoppPossibility=ghoppPossibility,
+            walkPossibility=gwalkPossibility,
+            repeatnotePossibility=grepeatnotePossibility
+            )
+        return Line(glengthInBars, gnotesPerBar, ginstrument, gline, gconcatenatePossibility, gpitch)
 
 
 def GenerateBass(chordLine, density, hoppPossibility=0.5, walkPossibility=0.5, repeatnotePossibility=0.5):
@@ -78,7 +82,7 @@ def GenerateBass(chordLine, density, hoppPossibility=0.5, walkPossibility=0.5, r
                 hoppingpattern.append(hop)
                 j += 1
             if random.random() < repeatnotePossibility and j < density-1:
-                bassLine.appen(repeatnote)
+                bassLine.append(repeatnote)
                 j += 1
             if pj == j:
                 bassLine.append(bassLine[-1])

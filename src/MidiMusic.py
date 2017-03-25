@@ -1,87 +1,105 @@
 """Generating whole music."""
 from Chords import GenerateChordsGroupsLine, GenerateChordsLine
-from Bass import BassLineOptions, BassSpecification
-from Melody import MelodySpecification
+from Bass import BassGenerator
+from Melody import MelodyGenerator
 from MyUtils import coalesce
-import programInstruments
-from itertools import chain
 import random
+from Line import addLineToTrack
+from midiutil.MidiFile3 import MIDIFile
+import programInstruments as pI
+from itertools import chain
 
 
 class MidiMusic:
     """Class doing all steps to get midi file with music."""
 
     def __init__(
-            self, seed=None, motiveLenght=None, musicLenght=None, notesPerBar=None, tempo=None,
+            self, seed=None, motiveLength=None, musicLength=None, notesPerBar=None, tempo=None,
             numberOfBassLines=None, bassLinesOptions=None,
-            melodyOptions=None):
+            numberOfMelodyLines=None, melodyLinesOptions=None,
+            basePitch=None):
         """Initialization of MidiMusic."""
         self.setSeed(seed)
-        self.motiveLenght = motiveLenght
-        self.musicLenght = musicLenght
+        self.motiveLength = motiveLength
+        self.musicLength = musicLength
         self.bassLinesOptions = coalesce(bassLinesOptions, [])
         self.numberOfBassLines = numberOfBassLines
-        self.melodyOptions = [melodyOptions]
+        self.melodyLinesOptions = coalesce(melodyLinesOptions, [])
+        self.numberOfMelodyLines = numberOfMelodyLines
         self.tempo = tempo
         self.notesPerBar = notesPerBar
+        self.basePitch = basePitch
 
     def generate(self, output):
         """Generate music using acctual state of object."""
-        # chord line
+        # general
         random.setstate(self.randomStates[0])
         generatedNotesPerBar = coalesce(self.notesPerBar, random.randint(1, 8))
-        chordLine = GenerateChordsLine(GenerateChordsGroupsLine(coalesce(self.motiveLenght, random.randint(1, 6))))
-        genertaedMotiveLenght = len(chordLine)
-        chordLine *= coalesce(self.musicLenght, random.randint(1, 4))
-        genertaedMusicLenght = len(chordLine)
-        # bass
-        generatedBassLinesOptions = self._bassLinesOptions(generatedNotesPerBar, genertaedMotiveLenght, genertaedMusicLenght)
-        bassLines = []
-        random.setstate(self.randomStates[1])
-        for bo in generatedBassLinesOptions:
-            nextRandomSet = random.randint(0, len(self.randomStates)-1)
-            bassLines.append(bo.Generate(chordLine))
-            random.setstate(self.randomStates[nextRandomSet])
-        # self._melodyLine = self
+        generatedNumberOfBassLines = coalesce(self.numberOfBassLines, random.randint(0, 2))
+        generatedNumberOfMelodyLines = coalesce(self.numberOfMelodyLines, random.randint(0, 2))
+        generatedTempo = coalesce(self.tempo, random.randint(80, 220))
+        genertedPitch = coalesce(self.basePitch, random.randint(48, 72))
 
-    def _bassLinesOptions(self, notesPerBar, motiveLenght, musicLenght):
+        # chord line
         random.setstate(self.randomStates[1])
-        bassLinesOpt = []
-        for x in range(0, coalesce(self.numberOfBassLines, random.randint(0, 2))):
-            if len(self.bassLinesOptions) <= x or self.bassLinesOptions[x] is None:
-                bassLinesOpt.append(BassLineOptions(
-                                            bassOptions=BassSpecification(
-                                                                        notesPerBar=random.randint(1, notesPerBar),
-                                                                        hoppPossibility=random.random(),
-                                                                        walkPossibility=random.random(),
-                                                                        repeatnotePossibility=random.random()),
-                                            lenghtInBars=random.randrange(motiveLenght, musicLenght+1, musicLenght),
-                                            instrument=random.choice(chain(programInstruments.Bass, programInstruments.Brass))
-                                            ))
+        chordLine = GenerateChordsLine(GenerateChordsGroupsLine(coalesce(self.motiveLength, random.randint(1, 6))))
+        genertaedMotiveLength = len(chordLine)
+        chordLine *= coalesce(self.musicLength, random.randint(1, 4))
+        lines = []
+
+        # bass
+        random.setstate(self.randomStates[2])
+        for i in range(generatedNumberOfBassLines):
+            nextRandomSet = random.randint(0, len(self.randomStates)-1)
+            if len(self.bassLinesOptions) > i:
+                if self.bassLinesOptions[i] is None:
+                    self.bassLinesOptions[i] = BassGenerator()
             else:
-                bassSpec = None
-                if self.bassLinesOptions[x].bassOptions is None:
-                    bassSpec = BassSpecification(
-                                    notesPerBar=random.randint(1, notesPerBar),
-                                    hoppPossibility=random.random(),
-                                    walkPossibility=random.random(),
-                                    repeatnotePossibility=random.random())
-                else:
-                    bassSpec = BassSpecification(
-                                    notesPerBar=coalesce(self.bassLinesOptions[x].bassOptions.notesPerBar, random.randint(1, notesPerBar)),
-                                    hoppPossibility=coalesce(self.bassLinesOptions[x].bassOptions.hoppPossibility, random.random()),
-                                    walkPossibility=coalesce(self.bassLinesOptions[x].bassOptions.walkPossibility, random.random()),
-                                    repeatnotePossibility=coalesce(self.bassLinesOptions[x].bassOptions.repeatnotePossibility, random.random()))
-                bassLinesOpt.append(BassLineOptions(
-                            bassOptions=bassSpec,
-                            lenghtInBars=coalesce(self.bassLinesOptions[x].lenghtInBars, random.randrange(motiveLenght, musicLenght+1, musicLenght)),
-                            instrument=coalesce(self.bassLinesOptions[x].instrument, random.choice(chain(programInstruments.Bass, programInstruments.Brass)))))
-        return bassLinesOpt
+                self.bassLinesOptions.append(BassGenerator())
+            lines.append(self.bassLinesOptions[i].Generate(chordLine, genertaedMotiveLength, generatedNotesPerBar, genertedPitch))
+            random.setstate(self.randomStates[nextRandomSet])
+
+        # melody
+        random.setstate(self.randomStates[3])
+        for i in range(generatedNumberOfMelodyLines):
+            nextRandomSet = random.randint(0, len(self.randomStates)-1)
+            if len(self.melodyLinesOptions) > i:
+                if self.melodyLinesOptions[i] is None:
+                    self.melodyLinesOptions[i] = MelodyGenerator()
+            else:
+                self.melodyLinesOptions.append(MelodyGenerator())
+            lines.append(self.melodyLinesOptions[i].Generate(chordLine, genertaedMotiveLength, generatedNotesPerBar, genertedPitch))
+            random.setstate(self.randomStates[nextRandomSet])
+
+        # Percussion
+        # MakeMidi
+        random.setstate(self.randomStates[5])
+        # chordLine *= coalesce(self.musicLength, random.randint(1, 4))
+        genertaedMusicLength = len(chordLine)
+        MyMIDI = MIDIFile(1+generatedNumberOfBassLines+generatedNumberOfMelodyLines)
+        MyMIDI.addTrackName(0, 0, "ChordLine")
+        MyMIDI.addTempo(0, 0, generatedTempo)
+        MyMIDI.addProgramChange(0, 0, 0, random.choice(list(chain(pI.Guitar, pI.Piano, pI.Organ))))
+        for i in range(len(chordLine)):
+            for x in chordLine[i]:
+                MyMIDI.addNote(0, 0, x+genertedPitch, i*generatedNotesPerBar, generatedNotesPerBar, 100)
+
+        random.setstate(self.randomStates[6])
+        for i in range(len(lines)):
+            nextRandomSet = random.randint(0, len(self.randomStates)-1)
+            addLineToTrack(MyMIDI, i+1, 0, lines[i], genertaedMusicLength*generatedNotesPerBar, generatedNotesPerBar)
+            MyMIDI.addTrackName(i+1, 0, "Track"+str(i+1))
+            MyMIDI.addTempo(i+1, 0, generatedTempo)
+            random.setstate(self.randomStates[nextRandomSet])
+
+        binfile = open(output, 'wb')
+        MyMIDI.writeFile(binfile)
+        binfile.close()
 
     def setSeed(self, seed):
         """Set new seed for random parameters."""
         random.seed(seed)
         self.randomStates = []
-        for s in random.choices(range(1, 0xFFFFFFFF), 10):
+        for s in random.choices(range(1, 0xFFFF), k=10):
             random.seed(s)
             self.randomStates.append(random.getstate())
