@@ -5,7 +5,7 @@ from Melody import MelodyGenerator
 from MyUtils import coalesce
 import random
 from Line import addLineToTrack
-from midiutil.MidiFile3 import MIDIFile
+from midiutil.MidiFile import MIDIFile
 import programInstruments as pI
 from itertools import chain
 
