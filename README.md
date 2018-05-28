@@ -1,2 +1,2 @@
 # MidiMusic
-Program generating narcotics melody in Python using miditime library.
+Program generating narcotics melody in Python using midiutil library.
