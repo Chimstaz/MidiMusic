@@ -5,4 +5,8 @@ Program generating narcotics melody in Python using midiutil library.
 midiutil library which can be install via pip.
 
 # Usage
-Run main.py using Python interpreter. Commandline argument --help gives available options.
+To run use this command in top folder of repository:
+```
+python MidiMusic
+```
+Add commandline argument --help to list available options.
