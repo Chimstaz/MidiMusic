@@ -17,9 +17,9 @@ class MidiMusic:
             self, seed=None, motiveLength=None, musicLength=None, notesPerBar=None, tempo=None,
             numberOfBassLines=None, bassLinesOptions=None,
             numberOfMelodyLines=None, melodyLinesOptions=None,
-            basePitch=None):
+            basePitch=None, chordInstrument=None):
         """Initialization of MidiMusic."""
-        self.setSeed(seed)
+        self.seed = seed
         self.motiveLength = motiveLength
         self.musicLength = musicLength
         self.bassLinesOptions = coalesce(bassLinesOptions, [])
@@ -29,6 +29,7 @@ class MidiMusic:
         self.tempo = tempo
         self.notesPerBar = notesPerBar
         self.basePitch = basePitch
+        self.chordInstrument = chordInstrument
 
     def generate(self, output):
         """Generate music using acctual state of object."""
@@ -56,7 +57,7 @@ class MidiMusic:
                     self.bassLinesOptions[i] = BassGenerator()
             else:
                 self.bassLinesOptions.append(BassGenerator())
-            lines.append(self.bassLinesOptions[i].Generate(chordLine, genertaedMotiveLength, generatedNotesPerBar, genertedPitch))
+            lines.append(self.bassLinesOptions[i].generate(chordLine, genertaedMotiveLength, generatedNotesPerBar, genertedPitch))
             random.setstate(self.randomStates[nextRandomSet])
 
         # melody
@@ -68,7 +69,7 @@ class MidiMusic:
                     self.melodyLinesOptions[i] = MelodyGenerator()
             else:
                 self.melodyLinesOptions.append(MelodyGenerator())
-            lines.append(self.melodyLinesOptions[i].Generate(chordLine, genertaedMotiveLength, generatedNotesPerBar, genertedPitch))
+            lines.append(self.melodyLinesOptions[i].generate(chordLine, genertaedMotiveLength, generatedNotesPerBar, genertedPitch))
             random.setstate(self.randomStates[nextRandomSet])
 
         # Percussion
@@ -77,17 +78,18 @@ class MidiMusic:
         # chordLine *= coalesce(self.musicLength, random.randint(1, 4))
         genertaedMusicLength = len(chordLine)
         MyMIDI = MIDIFile(1+generatedNumberOfBassLines+generatedNumberOfMelodyLines)
+        volume = 200//((2+generatedNumberOfBassLines+generatedNumberOfMelodyLines)//2)
         MyMIDI.addTrackName(0, 0, "ChordLine")
         MyMIDI.addTempo(0, 0, generatedTempo)
-        MyMIDI.addProgramChange(0, 0, 0, random.choice(list(chain(pI.Guitar, pI.Piano, pI.Organ))))
-        for i in range(len(chordLine)):
-            for x in chordLine[i]:
-                MyMIDI.addNote(0, 0, x+genertedPitch, i*generatedNotesPerBar, generatedNotesPerBar, 100)
+        MyMIDI.addProgramChange(0, 0, 0, coalesce(self.chordInstrument, random.choice(list(chain(pI.Guitar, pI.Piano)))))
+        for i, chord in enumerate(chordLine):
+            for x in chord:
+                MyMIDI.addNote(0, 0, x+genertedPitch, i*generatedNotesPerBar+1, generatedNotesPerBar, volume)
 
         random.setstate(self.randomStates[6])
-        for i in range(len(lines)):
+        for i, line in enumerate(lines):
             nextRandomSet = random.randint(0, len(self.randomStates)-1)
-            addLineToTrack(MyMIDI, i+1, 0, lines[i], genertaedMusicLength*generatedNotesPerBar, generatedNotesPerBar)
+            addLineToTrack(MyMIDI, i+1, 0, line, genertaedMusicLength*generatedNotesPerBar, generatedNotesPerBar, volume)
             MyMIDI.addTrackName(i+1, 0, "Track"+str(i+1))
             MyMIDI.addTempo(i+1, 0, generatedTempo)
             random.setstate(self.randomStates[nextRandomSet])
@@ -96,9 +98,16 @@ class MidiMusic:
         MyMIDI.writeFile(binfile)
         binfile.close()
 
-    def setSeed(self, seed):
+    @property
+    def seed(self):
+        """."""
+        return self._seed
+
+    @seed.setter
+    def seed(self, seed):
         """Set new seed for random parameters."""
-        random.seed(seed)
+        self._seed = coalesce(seed, random.randint(0, 100000000))
+        random.seed(self._seed)
         self.randomStates = []
         for s in random.choices(range(1, 0xFFFF), k=10):
             random.seed(s)

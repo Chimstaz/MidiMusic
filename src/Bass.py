@@ -26,7 +26,7 @@ class BassGenerator:
         self.concatenatePossibility = concatenatePossibility
         self.pitch = pitch
 
-    def Generate(self, chordLine, motiveLength=1, maxNotesPerBar=1, basePitch=60):
+    def generate(self, chordLine, motiveLength=1, maxNotesPerBar=1, basePitch=60):
         """Set state of the object ."""
         glengthInBars = coalesce(self.lengthInBars, motiveLength*random.randint(1, len(chordLine)/motiveLength))
         gnotesPerBar = coalesce(self.notesPerBar, random.randint(1, maxNotesPerBar))
@@ -65,7 +65,7 @@ def GenerateBass(chordLine, density, hoppPossibility=0.5, walkPossibility=0.5, r
     baseLine.append(baseLine[-1])
 
     hoppingpattern = deque([OCTAVE*random.choice([-1, 1]) for x in range(density * 3)])
-    for i in range(len(chordLine)):
+    for i, _ in enumerate(chordLine):
         bassLine.append(baseLine[i])
         j = 0
         pj = 0

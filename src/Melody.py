@@ -23,7 +23,7 @@ class MelodyGenerator:
         self.key = key
         self.pitch = pitch
 
-    def Generate(self, chordLine, motiveLength=1, maxNotesPerBar=1, basePitch=60):
+    def generate(self, chordLine, motiveLength=1, maxNotesPerBar=1, basePitch=60):
         """Set state of the object ."""
         glengthInBars = coalesce(self.lengthInBars, motiveLength*random.randint(1, len(chordLine)/motiveLength))
         gnotesPerBar = coalesce(self.notesPerBar, random.randint(1, maxNotesPerBar))

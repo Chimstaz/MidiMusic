@@ -6,7 +6,7 @@ import random
 Line = namedtuple("Line", "lengthInBars, notesPerBar, instrument, line, concatenatePossibility, pitchModifier")
 
 
-def addLineToTrack(MIDIObject, track, channel, lineDesc, endTime, barTime):
+def addLineToTrack(MIDIObject, track, channel, lineDesc, endTime, barTime, volume):
     """Add notes to track in MIDIObject."""
     MIDIObject.addProgramChange(track, channel, 0, lineDesc.instrument)
     concat = [(lineDesc.line[0], 1)]
@@ -19,8 +19,8 @@ def addLineToTrack(MIDIObject, track, channel, lineDesc, endTime, barTime):
     time = 0
     unitTime = barTime/lineDesc.notesPerBar
     while True:
-        for i in range(len(concat)):
-            MIDIObject.addNote(track, channel, lineDesc.pitchModifier+concat[i][0], time, concat[i][1]*unitTime, 100)
-            time += concat[i][1]*unitTime
+        for i, n in enumerate(concat):
+            MIDIObject.addNote(track, channel, lineDesc.pitchModifier+n[0], time+1, n[1]*unitTime, volume)
+            time += n[1]*unitTime
             if time >= endTime:
                 return

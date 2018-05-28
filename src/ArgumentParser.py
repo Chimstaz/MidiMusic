@@ -1,12 +1,11 @@
 """Stuff connected with parsing command line."""
 import argparse
-import sys
-from io import TextIOWrapper, BytesIO
 import programInstruments as pI
 from basicNotesDefinitions import MajorKeyNotes, MinorKeyNotes, Notes
 
 
 def _unsignedint(string):
+    """Checking if agument is positive number."""
     value = int(string)
     if value < 0:
         msg = "%r is not positive" % string
@@ -15,14 +14,16 @@ def _unsignedint(string):
 
 
 def _possibility(string):
+    """Checking if argument is number in [0;1]."""
     value = float(string)
-    if value < 0 or value > 1:
+    if not(0 <= value <= 1):
         msg = "%r is not in range [0;1]" % string
         raise argparse.ArgumentTypeError(msg)
     return value
 
 
 def _instrument(string):
+    """Checking if string is on list of instruments."""
     try:
         value = pI.Instrument[string]
         return value
@@ -32,6 +33,7 @@ def _instrument(string):
 
 
 def _key(string):
+    """Checking if argument represent note or major/minor key."""
     n = string.capitalize()
     if n == "Major":
         return MajorKeyNotes
@@ -45,70 +47,10 @@ def _key(string):
     return [value]
 
 
-def _addUsageOfLineParser(mainParser, lineParser, lineOpt):
-    # hack to get default usage and modify it
-    # parser has only print_usage, so I have to read it from redirected stdout
-    # setup the environment
-    old_stdout = sys.stdout
-    sys.stdout = TextIOWrapper(BytesIO(), sys.stdout.encoding)
-
-    mainParser.print_usage()
-
-    # get output
-    pos = sys.stdout.tell()
-    sys.stdout.seek(len("usage: "))       # jump to the start
-    defusage = sys.stdout.read()[:-1]  # read output, get rid of newline
-
-    sys.stdout.seek(pos)
-    lineParser.print_usage()
-
-    sys.stdout.seek(pos+len("usage: "+lineOpt+" "))       # jump to the start of interesting part
-    lineusage = sys.stdout.read()[:-1]
-
-    # restore stdout
-    sys.stdout.close()
-    sys.stdout = old_stdout
-
-    lineusage = "\n        [" + lineOpt + " \"" + lineusage + "\" ["+lineOpt+" \"...\" ...]]"
-
-    linepos = defusage.find("["+lineOpt+"]")
-    defusage = defusage[:linepos-1] + defusage[linepos+len(lineOpt)+2:] + lineusage
-
-    mainParser.usage = defusage
-
-
 def _addQuoteAtTheEndOfUsage(parser):
-    # hack to get default usage and modify it
-    # parser has only print_usage, so I have to read it from redirected stdout
-    # setup the environment
-    old_stdout = sys.stdout
-    sys.stdout = TextIOWrapper(BytesIO(), sys.stdout.encoding)
-
-    parser.print_usage()
-
-    # get output
-    sys.stdout.seek(len("usage: "))       # jump to the start
-    defusage = sys.stdout.read()[:-1]  # read output, get rid of newline
-
-    sys.stdout.close()
-    sys.stdout = old_stdout
-
+    """Usage of bass and melody look better in quotes."""
+    defusage = parser.format_usage()[len("usage: "):-1]
     parser.usage = defusage+"\""
-
-
-def _getParserHelp(parser):
-    old_stdout = sys.stdout
-    sys.stdout = TextIOWrapper(BytesIO(), sys.stdout.encoding)
-
-    parser.print_help()
-
-    # get output
-    sys.stdout.seek(0)       # jump to the start
-    helpmsg = sys.stdout.read()  # read output
-
-    sys.stdout.close()
-    sys.stdout = old_stdout
-    return helpmsg
 
 
 def ParseArgs(ArgsList=None):
@@ -118,6 +60,7 @@ def ParseArgs(ArgsList=None):
 
     mainParser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter)
 
+    mainParser.add_argument("output", help="Output file")
     mainParser.add_argument("-s", "--seed", type=int, help="Seed of the random")
     mainParser.add_argument("--nb", "--bassLines", type=_unsignedint, help="How many bass lines to generate", metavar="BASSLINES")
     mainParser.add_argument("--nm", "--melodyLines", type=_unsignedint, help="How many melody lines to generate", metavar="MELODYLINES")
@@ -126,7 +69,8 @@ def ParseArgs(ArgsList=None):
     mainParser.add_argument("-n", "--notesPerBar", type=_unsignedint, help="Maximum number of notes in bar")
     mainParser.add_argument("-t", "--tempo", type=_unsignedint, help="Tempo of music in bps")
     mainParser.add_argument("-p", "--pitch", type=_unsignedint, help="Base pitch of notes. Standard C is 60. 1 is one half tone and 12 is octave")
-    mainParser.add_argument("--instrumentList", action="store_true", help="Print instrument list")
+    mainParser.add_argument("-i", "--chordInstrument", type=_instrument, help="Instrument for chord line. To see instrument list use --instrumentList")
+    mainParser.add_argument("--instrumentList", action="store_true", help="Print instrument list. Output file will be not generated")
 
     mainParser.add_argument(bassShort, "--bass", action="append", metavar="\"BASSLINEOPTIONS\"", default=[])
     mainParser.add_argument(melodyShort, "--melody", action="append", metavar="\"MELODYLINEOPTIONS\"", default=[])
@@ -146,7 +90,7 @@ def ParseArgs(ArgsList=None):
     melodygroup = melodyParser.add_argument_group("melody line options")
     melodygroup.add_argument("-n", "--notesPerBar", type=_unsignedint, help="Maximum number of notes in bar in melody line")
     melodygroup.add_argument("-j", "--jump", type=_possibility, help="Possibility of jump in melody line (jump up or down by 6 half tones)")
-    melodygroup.add_argument("-k", "--key", nargs="*", type=_key, help="Key of melody line. Only notes from key will be used. Could be minor, major or list of notes (eg C Dis Gb)")
+    melodygroup.add_argument("-k", "--key", default=[MajorKeyNotes], nargs="+", type=_key, help="Key of melody line. Only notes from key will be used. Could be minor, major or list of notes (eg C Dis Gb)")
     melodygroup.add_argument("-c", "--concat", type=_possibility, help="Possibility of concatenation equals notes into one with longer duration")
     melodygroup.add_argument("-p", "--pitch", type=_unsignedint, help="Base pitch of notes in melody line")
     melodygroup.add_argument("-l", "--length", type=_unsignedint, help="Lenght of melody line in bars. If shorter then musicLength than line will be repeated")
@@ -154,16 +98,10 @@ def ParseArgs(ArgsList=None):
 
     _addQuoteAtTheEndOfUsage(bassParser)
     _addQuoteAtTheEndOfUsage(melodyParser)
-    # _addUsageOfLineParser(mainParser, bassParser, bassShort)
-    # _addUsageOfLineParser(mainParser, melodyParser, melodyShort)
-
-    mainParser.epilog = _getParserHelp(bassParser)
-    mainParser.epilog += "\n"+_getParserHelp(melodyParser)
-
-    # mainParser.print_help()
+    mainParser.epilog = bassParser.format_help()
+    mainParser.epilog += "\n"+melodyParser.format_help()
 
     args = mainParser.parse_args(ArgsList)
     args.basslines = [bassParser.parse_args(b.split()) for b in args.bass]
     args.melodylines = [melodyParser.parse_args(m.split()) for m in args.melody]
     return args
-    # mainParser.print_usage()
